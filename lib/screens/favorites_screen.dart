@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:myapp/models/stop.dart';
 import 'package:myapp/providers/favorites_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -11,24 +14,20 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
+  late final MapController _mapController;
 
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to ensure the provider is available
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Use listen: false to avoid unnecessary rebuilds in initState
-      Provider.of<FavoritesProvider>(context, listen: false).loadFavorites();
-    });
+    _mapController = MapController();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Use a Consumer to listen to changes in the provider
     return Consumer<FavoritesProvider>(
       builder: (context, favoritesProvider, child) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Favorite Agencies')),
+          appBar: AppBar(title: const Text('Favorite Agencies and Stops')),
           body: _buildBody(context, favoritesProvider),
         );
       },
@@ -62,15 +61,77 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       );
     }
 
+    return Column(
+      children: [
+        Expanded(flex: 3, child: _buildMap(provider.favoriteStops, provider)),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12.0),
+          child: Text(
+            'Favorite Agencies',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(flex: 2, child: _buildAgencyList(provider)),
+      ],
+    );
+  }
+
+  Widget _buildMap(List<Stop> stops, FavoritesProvider provider) {
+    final validStops = stops
+        .where((s) => s.lat != null && s.lon != null)
+        .toList();
+
+    final markers = validStops.map((stop) {
+      return Marker(
+        width: 80.0,
+        height: 80.0,
+        point: LatLng(stop.lat!, stop.lon!),
+        child: Tooltip(
+          message: stop.name ?? 'Unnamed Stop',
+          child: const Icon(Icons.location_pin, color: Colors.red, size: 30),
+        ),
+      );
+    }).toList();
+
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: const LatLng(39.6, 3.2),
+        initialZoom: 8.5,
+        onMapReady: () {
+          if (validStops.isNotEmpty) {
+            final bounds = LatLngBounds.fromPoints(
+              validStops.map((s) => LatLng(s.lat!, s.lon!)).toList(),
+            );
+            _mapController.fitCamera(
+              CameraFit.bounds(
+                bounds: bounds,
+                padding: const EdgeInsets.all(50),
+              ),
+            );
+          }
+        },
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: const ['a', 'b', 'c'],
+        ),
+        MarkerLayer(markers: markers),
+      ],
+    );
+  }
+
+  Widget _buildAgencyList(FavoritesProvider provider) {
     return ListView.builder(
       itemCount: provider.favoriteAgencies.length,
       itemBuilder: (context, index) {
         final agency = provider.favoriteAgencies[index];
         return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          elevation: 3,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: ListTile(
             title: Text(
@@ -86,6 +147,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Removed ${agency.name} from favorites'),
+                    duration: const Duration(seconds: 2),
                   ),
                 );
               },

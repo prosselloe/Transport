@@ -138,7 +138,8 @@ class Agency {
       center: center,
       polygonPoints: polygonPoints,
       feedVersion: _parseNested(json['feed_version'], FeedVersion.fromJson),
-      places: (json['places'] as List<dynamic>?)
+      places:
+          (json['places'] as List<dynamic>?)
               ?.map((p) => _parseNested(p, Place.fromJson))
               .whereType<Place>()
               .toList() ??

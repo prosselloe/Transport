@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:myapp/utils/color_utils.dart';
 
 class TransitRoute {
   final String id;
@@ -35,18 +36,6 @@ class TransitRoute {
   });
 
   factory TransitRoute.fromJson(Map<String, dynamic> json) {
-    Color? parseColor(String? colorString) {
-      if (colorString == null || colorString.isEmpty) return null;
-      final buffer = StringBuffer();
-      if (colorString.length == 6 || colorString.length == 7) buffer.write('ff');
-      buffer.write(colorString.replaceFirst('#', ''));
-      try {
-        return Color(int.parse(buffer.toString(), radix: 16));
-      } catch (e) {
-        return null;
-      }
-    }
-
     int routeType = 0;
     final dynamic routeTypeValue = json['route_type'];
     if (routeTypeValue is int) {
@@ -63,8 +52,8 @@ class TransitRoute {
       description: json['route_desc'] as String?,
       type: routeType,
       url: json['route_url'] as String?,
-      color: parseColor(json['route_color'] as String?),
-      textColor: parseColor(json['route_text_color'] as String?),
+      color: json['route_color'] != null ? hexToColor(json['route_color']) : null,
+      textColor: json['route_text_color'] != null ? hexToColor(json['route_text_color']) : null,
       bikesAllowed: json['bikes_allowed']?.toString(),
       wheelchairAccessible: json['wheelchair_accessible']?.toString(),
       // points and bounds will be populated later
@@ -72,10 +61,7 @@ class TransitRoute {
   }
 
   // Method to create a new instance with updated points and bounds
-  TransitRoute copyWith({
-    List<LatLng>? points,
-    LatLngBounds? bounds,
-  }) {
+  TransitRoute copyWith({List<LatLng>? points, LatLngBounds? bounds}) {
     return TransitRoute(
       id: id,
       agencyId: agencyId,

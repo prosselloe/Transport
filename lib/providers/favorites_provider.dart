@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/models/agency.dart';
+import 'package:myapp/models/stop.dart';
 import 'package:myapp/services/transit_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,10 +9,12 @@ class FavoritesProvider with ChangeNotifier {
 
   List<String> _favoriteAgencyIds = [];
   List<Agency> _favoriteAgencies = [];
+  List<Stop> _favoriteStops = [];
   bool _isLoading = false;
 
   List<String> get favoriteAgencyIds => _favoriteAgencyIds;
   List<Agency> get favoriteAgencies => _favoriteAgencies;
+  List<Stop> get favoriteStops => _favoriteStops;
   bool get isLoading => _isLoading;
 
   FavoritesProvider() {
@@ -27,11 +30,16 @@ class FavoritesProvider with ChangeNotifier {
         _favoriteAgencies = await _transitService.getAgenciesByIds(
           _favoriteAgencyIds,
         );
+        _favoriteStops = await _transitService.getStopsForAgencies(
+          _favoriteAgencyIds,
+        );
       } catch (e) {
-        _favoriteAgencies = []; // Clear list on error
+        _favoriteAgencies = [];
+        _favoriteStops = [];
       }
     } else {
-      _favoriteAgencies = []; // Ensure list is cleared if no favorites
+      _favoriteAgencies = [];
+      _favoriteStops = [];
     }
     _setLoading(false);
   }
@@ -51,8 +59,6 @@ class FavoritesProvider with ChangeNotifier {
     }
 
     await prefs.setStringList('favoriteAgencies', _favoriteAgencyIds);
-    
-    // Always reload to ensure the list is consistent
     await loadFavorites();
   }
 
