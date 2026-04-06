@@ -1,20 +1,20 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:myapp/models/agency.dart';
-import 'package:myapp/models/stop.dart';
-import 'package:myapp/services/transit_service.dart';
+import 'package:transport/models/agency.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transport/models/stop.dart';
+import 'package:transport/services/transit_service.dart';
 
 class FavoritesProvider with ChangeNotifier {
+  static const _favoritesKey = 'favoriteAgencies';
+
   final TransitService _transitService = TransitService();
-
-  List<String> _favoriteAgencyIds = [];
   List<Agency> _favoriteAgencies = [];
-  List<Stop> _favoriteStops = [];
-  bool _isLoading = false;
+  final Map<String, List<Stop>> _stopsByAgency = {};
+  bool _isLoading = true;
 
-  List<String> get favoriteAgencyIds => _favoriteAgencyIds;
   List<Agency> get favoriteAgencies => _favoriteAgencies;
-  List<Stop> get favoriteStops => _favoriteStops;
+  Map<String, List<Stop>> get stopsByAgency => _stopsByAgency;
   bool get isLoading => _isLoading;
 
   FavoritesProvider() {
@@ -22,47 +22,55 @@ class FavoritesProvider with ChangeNotifier {
   }
 
   Future<void> loadFavorites() async {
-    _setLoading(true);
-    final prefs = await SharedPreferences.getInstance();
-    _favoriteAgencyIds = prefs.getStringList('favoriteAgencies') ?? [];
-    if (_favoriteAgencyIds.isNotEmpty) {
-      try {
-        _favoriteAgencies = await _transitService.getAgenciesByIds(
-          _favoriteAgencyIds,
-        );
-        _favoriteStops = await _transitService.getStopsForAgencies(
-          _favoriteAgencyIds,
-        );
-      } catch (e) {
-        _favoriteAgencies = [];
-        _favoriteStops = [];
-      }
-    } else {
-      _favoriteAgencies = [];
-      _favoriteStops = [];
-    }
-    _setLoading(false);
-  }
+    _isLoading = true;
+    notifyListeners();
 
-  void _setLoading(bool loading) {
-    _isLoading = loading;
+    final prefs = await SharedPreferences.getInstance();
+    final favoriteStrings = prefs.getStringList(_favoritesKey) ?? [];
+
+    _favoriteAgencies = favoriteStrings.map((favString) {
+      final jsonMap = json.decode(favString) as Map<String, dynamic>;
+      return Agency.fromJsonForFavorites(jsonMap);
+    }).toList();
+
+    await _loadStopsForFavorites();
+
+    _isLoading = false;
     notifyListeners();
   }
 
-  Future<void> toggleAgencyFavorite(String agencyId) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    if (_favoriteAgencyIds.contains(agencyId)) {
-      _favoriteAgencyIds.remove(agencyId);
-    } else {
-      _favoriteAgencyIds.add(agencyId);
+  Future<void> _loadStopsForFavorites() async {
+    for (final agency in _favoriteAgencies) {
+      final stops = await _transitService.getStopsForAgencies([agency.id]);
+      _stopsByAgency[agency.id] = stops;
     }
+  }
 
-    await prefs.setStringList('favoriteAgencies', _favoriteAgencyIds);
-    await loadFavorites();
+  Future<void> toggleAgencyFavorite(Agency agency) async {
+    final isCurrentlyFavorite = isFavoriteAgency(agency.id);
+
+    if (isCurrentlyFavorite) {
+      _favoriteAgencies.removeWhere((a) => a.id == agency.id);
+      _stopsByAgency.remove(agency.id);
+    } else {
+      _favoriteAgencies.add(agency);
+      final stops = await _transitService.getStopsForAgencies([agency.id]);
+      _stopsByAgency[agency.id] = stops;
+    }
+    
+    await _saveFavorites();
+    notifyListeners();
+  }
+
+  Future<void> _saveFavorites() async {
+     final prefs = await SharedPreferences.getInstance();
+     final favoriteStrings = _favoriteAgencies.map((agency) {
+       return json.encode(agency.toJson());
+     }).toList();
+     await prefs.setStringList(_favoritesKey, favoriteStrings);
   }
 
   bool isFavoriteAgency(String agencyId) {
-    return _favoriteAgencyIds.contains(agencyId);
+    return _favoriteAgencies.any((agency) => agency.id == agencyId);
   }
 }

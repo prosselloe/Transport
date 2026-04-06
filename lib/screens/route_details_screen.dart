@@ -1,11 +1,12 @@
-import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:myapp/models/route.dart';
-import 'package:myapp/models/stop.dart';
-import 'package:myapp/services/transit_service.dart';
+import 'package:transport/models/route.dart';
+import 'package:transport/models/stop.dart';
+import 'package:transport/services/transit_service.dart';
+import 'package:transport/widgets/app_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // A new data class to hold the combined result
 class RouteDetailsData {
@@ -35,211 +36,241 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
   }
 
   Future<RouteDetailsData> _loadRouteDetails() async {
-    // Fetch the base route details and the stops in parallel
     final results = await Future.wait([
-      _transitService.getRouteDetails(widget.route.id),
+      _transitService.getRouteWithGeometry(widget.route),
       _transitService.getStops(widget.route.id),
     ]);
 
-    final route = results[0] as TransitRoute;
+    TransitRoute routeWithGeometry = results[0] as TransitRoute;
     final stops = results[1] as List<Stop>;
 
-    // Extract points from stops and calculate bounds
-    final List<LatLng> points = stops
-        .where((stop) => stop.location != null)
-        .map((stop) => stop.location!)
-        .toList();
+    if (routeWithGeometry.points.isEmpty && stops.isNotEmpty) {
+      final List<LatLng> stopPoints = stops
+          .where((stop) => stop.location != null)
+          .map((stop) => stop.location!)
+          .toList();
 
-    LatLngBounds? bounds;
-    if (points.isNotEmpty) {
-      bounds = LatLngBounds.fromPoints(points);
+      if (stopPoints.isNotEmpty) {
+        final bounds = LatLngBounds.fromPoints(stopPoints);
+        routeWithGeometry = routeWithGeometry.copyWith(
+          points: stopPoints,
+          bounds: bounds,
+        );
+      }
     }
-
-    // Create a new TransitRoute instance with the points and bounds
-    final routeWithGeometry = route.copyWith(points: points, bounds: bounds);
 
     return RouteDetailsData(routeWithGeometry, stops);
   }
 
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not launch $url')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Use a Stack to overlay the close button
-      body: Stack(
-        children: [
-          FutureBuilder<RouteDetailsData>(
-            future: _detailsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error loading route details: ${snapshot.error}'),
-                );
-              }
-              if (!snapshot.hasData) {
-                return const Center(child: Text('No route details found.'));
-              }
+    return FutureBuilder<RouteDetailsData>(
+      future: _detailsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            appBar: CustomAppBar(title: 'Loading Route...'),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: CustomAppBar(title: 'Error'),
+            body: Center(
+              child: Text('Error loading route details: ${snapshot.error}'),
+            ),
+          );
+        }
+        if (!snapshot.hasData) {
+          return Scaffold(
+            appBar: CustomAppBar(title: 'No Data'),
+            body: const Center(child: Text('No route details found.')),
+          );
+        }
 
-              final route = snapshot.data!.route;
-              final stops = snapshot.data!.stops;
+        final route = snapshot.data!.route;
+        final stops = snapshot.data!.stops;
+        final title = route.longName != null && route.longName!.isNotEmpty
+            ? route.longName!
+            : route.shortName ?? 'Route Details';
 
-              final appBarColor = route.color ?? Theme.of(context).primaryColor;
-              final contrastingColor =
-                  ThemeData.estimateBrightnessForColor(appBarColor) ==
-                      Brightness.dark
-                  ? Colors.white
-                  : Colors.black;
-
-              return CustomScrollView(
-                slivers: [
-                  SliverAppBar(
-                    expandedHeight: 250.0,
-                    floating: false,
-                    pinned: true,
-                    backgroundColor: appBarColor,
-                    title: Text(
-                      route.shortName ?? route.longName ?? 'Route Details',
-                      style: TextStyle(color: contrastingColor),
-                    ),
-                    flexibleSpace: FlexibleSpaceBar(
-                      background:
-                          route.points.isNotEmpty && route.bounds != null
-                          ? FlutterMap(
-                              options: MapOptions(
-                                initialCameraFit: CameraFit.bounds(
-                                  bounds: route.bounds!,
-                                  padding: const EdgeInsets.all(40.0),
-                                ),
-                              ),
-                              children: [
-                                TileLayer(
-                                  urlTemplate:
-                                      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                  subdomains: const ['a', 'b', 'c'],
-                                ),
-                                PolylineLayer(
-                                  polylines: [
-                                    Polyline(
-                                      points: route.points,
-                                      color: route.color ?? Colors.blue,
-                                      strokeWidth: 4,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            )
-                          : Container(), // Empty container if map is not available
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            route.longName ?? 'No long name',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          if (route.description != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(route.description!),
-                            ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Stops',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Divider(),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (stops.isEmpty)
-                    const SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: Text(
-                            'No stops found for this route.',
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final stop = stops[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  route.color?.withAlpha(51) ??
-                                  Theme.of(context).primaryColorLight,
-                              child: const Icon(
-                                Icons.directions_bus,
-                                size: 20,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            title: Text(
-                              stop.name ?? 'Unnamed Stop',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            subtitle: stop.code != null
-                                ? Text('Code: ${stop.code}')
-                                : null,
-                            trailing:
-                                (stop.wheelchairBoarding == '1' ||
-                                    stop.wheelchairBoarding == '2')
-                                ? Icon(
-                                    Icons.wheelchair_pickup,
-                                    color: Colors.blueAccent,
-                                    semanticLabel:
-                                        (stop.wheelchairBoarding == '2')
-                                        ? 'Wheelchair accessible with assistance'
-                                        : 'Fully wheelchair accessible',
-                                  )
-                                : null,
-                          ),
-                        );
-                      }, childCount: stops.length),
-                    ),
-                ],
-              );
-            },
-          ),
-          // Floating close button
-          Positioned(
-            top: 15.0, // Moved higher
-            right: 10.0, // Moved to the right
-            child: Material(
-              color: Colors.black.withAlpha((255 * 0.5).round()),
-              shape: const CircleBorder(),
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () {
-                  developer.log('Close button pressed!', name: 'myapp.debug');
-                  context.pop();
-                },
+        return Scaffold(
+          appBar: CustomAppBar(title: title),
+          body: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 250,
+                  child: _buildMap(route, stops),
+                ),
               ),
+              if (route.longName != null && route.longName!.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 0.0),
+                    child: Text(
+                      route.longName!,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+                  child: Text(
+                    'Stops',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              _buildSliverStopList(stops, route),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMap(TransitRoute route, List<Stop> stops) {
+    if (route.points.isEmpty || route.bounds == null) {
+      return Container(
+        color: Colors.grey[300],
+        child: const Center(
+          child: Text(
+            'Map data not available.',
+            style: TextStyle(color: Colors.black54),
+          ),
+        ),
+      );
+    }
+
+    return FlutterMap(
+      options: MapOptions(
+        initialCameraFit: CameraFit.bounds(
+          bounds: route.bounds!,
+          padding: const EdgeInsets.all(40.0),
+        ),
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: const ['a', 'b', 'c'],
+          userAgentPackageName: 'transport.prosselloe.com',
+        ),
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: route.points,
+              color: route.color ?? Colors.blue,
+              strokeWidth: 4,
+            ),
+          ],
+        ),
+        MarkerLayer(
+          markers: stops
+              .where((stop) => stop.location != null)
+              .map((stop) {
+                final bool isMallorcaStop = stop.id.startsWith('mallorca');
+                final bool hasUrl = stop.url != null && stop.url!.isNotEmpty;
+                VoidCallback? onTapAction;
+                if (hasUrl) {
+                  onTapAction = () => _launchURL(stop.url!);
+                } else if (isMallorcaStop) {
+                  onTapAction = () => context.go('/stop/${stop.id}');
+                }
+                return Marker(
+                  point: stop.location!,
+                  width: 40,
+                  height: 40,
+                  child: GestureDetector(
+                    onTap: onTapAction,
+                    child: Icon(
+                      Icons.location_pin,
+                      color: route.color ?? Colors.red,
+                      size: 20,
+                    ),
+                  ),
+                );
+              })
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSliverStopList(List<Stop> stops, TransitRoute route) {
+    if (stops.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Text(
+              'No stops found for this route.',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
           ),
-        ],
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final stop = stops[index];
+          final isMallorcaStop = stop.id.startsWith('mallorca');
+          final hasUrl = stop.url != null && stop.url!.isNotEmpty;
+
+          VoidCallback? onTapAction;
+          Widget trailingWidget = const SizedBox.shrink();
+
+          if (hasUrl) {
+            onTapAction = () => _launchURL(stop.url!);
+            trailingWidget = Icon(Icons.link, size: 20, color: Colors.grey);
+          } else if (isMallorcaStop) {
+            onTapAction = () => context.go('/stop/${stop.id}');
+            trailingWidget =
+                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey);
+          }
+
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor:
+                    route.color?.withAlpha(51) ?? Theme.of(context).primaryColorLight,
+                child: const Icon(
+                  Icons.directions_bus,
+                  size: 20,
+                  color: Colors.black54,
+                ),
+              ),
+              title: Text(
+                stop.name ?? 'Unnamed Stop',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: stop.code != null ? Text('Code: ${stop.code}') : null,
+              trailing: trailingWidget,
+              onTap: onTapAction,
+            ),
+          );
+        },
+        childCount: stops.length,
       ),
     );
   }

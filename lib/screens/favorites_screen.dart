@@ -2,131 +2,154 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:myapp/models/stop.dart';
-import 'package:myapp/providers/favorites_provider.dart';
+import 'package:transport/models/agency.dart';
+import 'package:transport/providers/favorites_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:transport/widgets/app_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class FavoritesScreen extends StatefulWidget {
+class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
-  @override
-  State<FavoritesScreen> createState() => _FavoritesScreenState();
-}
-
-class _FavoritesScreenState extends State<FavoritesScreen> {
-  late final MapController _mapController;
-
-  @override
-  void initState() {
-    super.initState();
-    _mapController = MapController();
+  Future<void> _launchURL(BuildContext context, String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not launch $url')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<FavoritesProvider>(
-      builder: (context, favoritesProvider, child) {
-        return Scaffold(
-          appBar: AppBar(title: const Text('Favorite Agencies and Stops')),
-          body: _buildBody(context, favoritesProvider),
-        );
-      },
-    );
-  }
-
-  Widget _buildBody(BuildContext context, FavoritesProvider provider) {
-    if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (provider.favoriteAgencies.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.favorite_border, size: 80, color: Colors.grey),
-            SizedBox(height: 20),
-            Text(
-              'No Favorites Yet',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Tap the heart icon on any agency to add it here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        Expanded(flex: 3, child: _buildMap(provider.favoriteStops, provider)),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12.0),
-          child: Text(
-            'Favorite Agencies',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Expanded(flex: 2, child: _buildAgencyList(provider)),
-      ],
-    );
-  }
-
-  Widget _buildMap(List<Stop> stops, FavoritesProvider provider) {
-    final validStops = stops
-        .where((s) => s.lat != null && s.lon != null)
-        .toList();
-
-    final markers = validStops.map((stop) {
-      return Marker(
-        width: 80.0,
-        height: 80.0,
-        point: LatLng(stop.lat!, stop.lon!),
-        child: Tooltip(
-          message: stop.name ?? 'Unnamed Stop',
-          child: const Icon(Icons.location_pin, color: Colors.red, size: 30),
-        ),
-      );
-    }).toList();
-
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: const LatLng(39.6, 3.2),
-        initialZoom: 8.5,
-        onMapReady: () {
-          if (validStops.isNotEmpty) {
-            final bounds = LatLngBounds.fromPoints(
-              validStops.map((s) => LatLng(s.lat!, s.lon!)).toList(),
-            );
-            _mapController.fitCamera(
-              CameraFit.bounds(
-                bounds: bounds,
-                padding: const EdgeInsets.all(50),
-              ),
-            );
+    return Scaffold(
+      appBar: const CustomAppBar(title: 'Favorite Agencies'),
+      body: Consumer<FavoritesProvider>(
+        builder: (context, favoritesProvider, child) {
+          if (favoritesProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
           }
+
+          final favoriteAgencies = favoritesProvider.favoriteAgencies;
+
+          if (favoriteAgencies.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return Column(
+            children: [
+              _buildMapView(context, favoritesProvider),
+              Expanded(
+                child: _buildAgencyList(
+                  context,
+                  favoritesProvider,
+                  favoriteAgencies,
+                ),
+              ),
+            ],
+          );
         },
       ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: const ['a', 'b', 'c'],
-        ),
-        MarkerLayer(markers: markers),
-      ],
     );
   }
 
-  Widget _buildAgencyList(FavoritesProvider provider) {
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.favorite_border, size: 80, color: Colors.grey),
+          SizedBox(height: 20),
+          Text(
+            'No Favorites Yet',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Tap the heart icon on any agency to add it here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapView(BuildContext context, FavoritesProvider provider) {
+    final List<Marker> markers = [];
+    final List<LatLng> allPoints = [];
+
+    for (var agency in provider.favoriteAgencies) {
+      final stops = provider.stopsByAgency[agency.id] ?? [];
+      final agencyColor = Color(agency.id.hashCode).withAlpha(255);
+
+      for (var stop in stops) {
+        if (stop.location != null) {
+          allPoints.add(stop.location!);
+
+          final bool isMallorcaStop = stop.id.startsWith('mallorca');
+          final bool hasUrl = stop.url != null && stop.url!.isNotEmpty;
+          VoidCallback? onTapAction;
+          if (hasUrl) {
+            onTapAction = () => _launchURL(context, stop.url!);
+          } else if (isMallorcaStop) {
+            onTapAction = () => context.go('/stop/${stop.id}');
+          }
+
+          markers.add(
+            Marker(
+              width: 40.0,
+              height: 40.0,
+              point: stop.location!,
+              child: GestureDetector(
+                onTap: onTapAction,
+                child: Icon(
+                  Icons.location_pin,
+                  color: agencyColor,
+                  size: 20.0,
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    }
+
+    return SizedBox(
+      height: 300, 
+      child: FlutterMap(
+        options: MapOptions(
+          initialCenter: const LatLng(39.6, 2.9),
+          initialZoom: 9.0,
+          initialCameraFit: allPoints.isNotEmpty
+              ? CameraFit.bounds(
+                  bounds: LatLngBounds.fromPoints(allPoints),
+                  padding: const EdgeInsets.all(50.0),
+                )
+              : null,
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            subdomains: const ['a', 'b', 'c'],
+        userAgentPackageName: 'transport.prosselloe.com',
+          ),
+          MarkerLayer(markers: markers),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgencyList(
+    BuildContext context,
+    FavoritesProvider provider,
+    List<Agency> agencies,
+  ) {
     return ListView.builder(
-      itemCount: provider.favoriteAgencies.length,
+      itemCount: agencies.length,
       itemBuilder: (context, index) {
-        final agency = provider.favoriteAgencies[index];
+        final agency = agencies[index];
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           elevation: 2,
@@ -143,7 +166,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               icon: const Icon(Icons.favorite, color: Colors.red),
               tooltip: 'Remove from Favorites',
               onPressed: () {
-                provider.toggleAgencyFavorite(agency.id);
+                provider.toggleAgencyFavorite(agency);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Removed ${agency.name} from favorites'),
@@ -153,7 +176,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               },
             ),
             onTap: () {
-              context.go('/agency_details', extra: agency);
+              context.go('/agency/${agency.id}');
             },
           ),
         );
