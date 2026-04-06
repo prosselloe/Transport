@@ -1,7 +1,7 @@
-name: myapp
-description: "A new Flutter project."
+name: transport
+description: "Transport Balears"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+10
 
 environment:
   sdk: ^3.9.0
@@ -24,11 +24,26 @@ dependencies:
   latlong2: ^0.9.1
   geolocator: ^14.0.2
   mallorca_transit_services: ^1.2.1
+  polyline_codec: ^0.1.6
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/logo.png
+  android: true
+  ios: true
 
 flutter:
   uses-material-design: true

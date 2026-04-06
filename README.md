@@ -37,4 +37,3 @@ Aquesta aplicació no hauria estat possible sense les fantàstiques fonts de dad
 *   [**Transit.land (API v2)**](https://www.transit.land/documentation/rest-api/): Una plataforma de dades obertes per al transport públic.
 *   [**Mallorca Transport Services API**](https://github.com/open-transport-mallorca/mallorca_transit_services): Un paquet de Dart per accedir a les dades del transport públic de Mallorca.
 *   [**Firebase i Gemini**](https://firebase.google.com/): El backend, l'allotjament i les eines d'IA generativa han estat proporcionades per Google a través de Firebase i l'assistent de codi Gemini a Firebase Studio.
-

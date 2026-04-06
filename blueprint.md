@@ -1,45 +1,27 @@
-# Transit App Blueprint
+# Transport Balears Blueprint
 
 ## Overview
 
-This document outlines the architecture, features, and design of the Transit App, a Flutter application for browsing public transit information.
+This document outlines the architecture, features, and design of Transport Balears, a Flutter application for browsing public transit information in the Balearic Islands, with a special focus on the services provided by the Consorci de Transports de Mallorca.
 
 ## Implemented Features & Design
 
-*   **Project Setup:** Standard Flutter setup with key dependencies (`http`, `go_router`, `provider`, etc.) and a Nix environment for build tools.
-*   **Architecture:** Service-oriented architecture with a `TransitService`, data models, `provider` for state management, and `go_router` for navigation.
-*   **UI & Design:**
-    *   **Theming:** Centralized Material 3 theme with `google_fonts` and dark mode support.
-    *   **Main Screen (Agency List):** A feature-rich screen with real-time search, error handling, a favorites system, and a clean `Card`-based UI.
-    *   **Agency Details Screen:** A redesigned screen with a clean layout, `Card`-based information sections, and a visually intuitive list of routes with type-specific icons.
-    *   **Route Details Screen:** A polished screen that displays route details, including names, description, and official colors, along with an integrated map view, all within a consistent, `Card`-based layout.
-*   **Error Handling:** Custom `ApiException` and robust handling of nullable data and type mismatches from the API, resolving multiple runtime errors.
-
----
-
-## Current Plan: Finalize Favorites Screen
-
-The `FavoritesScreen` is the last remaining piece to complete the core user experience. The current implementation is functional but inefficient and lacks the polished design of the other screens.
-
-### Steps:
-
-1.  **Review Existing Code:** The current `favorites_screen.dart` loads all agencies from the API and then filters them based on the user's favorite IDs. This is inefficient.
-
-2.  **Optimize Data Fetching:**
-    *   Instead of fetching all agencies, the new approach will be to first get the list of favorite agency IDs from `FavoritesProvider`.
-    *   Then, create a new method in `TransitService`, such as `getAgenciesByIds(List<String> ids)`, that specifically requests only the data for those favorite agencies from the API. This will significantly improve the screen's loading time.
-
-3.  **Refine the UI/UX:**
-    *   **Empty State:** Redesign the view for when the user has no favorites. Instead of a simple line of text, create a more engaging message with a large icon (e.g., `Icons.favorite_border`), a clear headline, and descriptive subtext.
-    *   **List Item Design:** Redesign the list items to be consistent with the main screen. Each favorite will be a `Card` with a `ListTile`.
-    *   **Remove from Favorites:** The trailing icon will be a filled-in heart (`Icons.favorite`). Tapping this icon will immediately remove the agency from the favorites list, providing instant feedback to the user.
-
-4.  **Implement the Changes:**
-    *   Add the `getAgenciesByIds` method to `lib/services/transit_service.dart`.
-    *   Modify `lib/screens/favorites_screen.dart` to use the new data fetching logic.
-    *   Rebuild the `build` method to implement the new empty state and list item design.
-
-5.  **Final Testing:**
-    *   Thoroughly test the favorites feature: add agencies, view them on the favorites screen, and remove them.
-    *   Ensure the screen handles all states correctly (loading, empty, has favorites).
-    *   Confirm that the entire application flow is smooth and bug-free.
+*   **Agencies Screen**: Displays a grid of transit agencies, distinguishing between the Consorci de Transports de Mallorca and others from the Onestop API.
+*   **Agency/Stop Details Screen**:
+    *   Shows details for a selected agency or a specific stop.
+    *   Displays a map with all stops for an agency or just the selected stop.
+    *   The map includes the user's current location.
+    *   Lists all the routes associated with the agency or stop.
+*   **Route Details Screen**:
+    *   Displays the path of a selected route on a map, including all its stops.
+    *   Shows a list of all stops for the route.
+    *   The AppBar color dynamically adapts to the route's color for a better user experience.
+*   **Interactive Stop Elements (List and Map)**:
+    *   Both the stop markers on the maps and the items in the stop lists are interactive.
+    *   If a stop provides an external URL (from Transit.land), tapping it will open the URL in a browser.
+    *   If there's no URL but the stop belongs to the "Consorci de Transports de Mallorca" (prefixed with `mallorca::`), tapping it will navigate to the stop's detail screen.
+    *   For other cases, the tap action is disabled to prevent navigation to empty or irrelevant screens.
+*   **Theming**:
+    *   The app uses a custom theme with a primary color of `#0175C2`.
+    *   A `ThemeProvider` is used to allow users to switch between light, dark, and system theme modes.
+*   **Splash Screen**: A native splash screen is implemented for a professional app launch.
