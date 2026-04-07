@@ -36,7 +36,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Favorites',
         ),
         IconButton(
-          icon: const Icon(Icons.info),
+          icon: const Icon(Icons.info_outline),
           onPressed: () => context.go('/about'),
           tooltip: 'About',
         ),

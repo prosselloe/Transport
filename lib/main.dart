@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:transport/models/route.dart' as model;
@@ -15,6 +16,7 @@ import 'package:transport/theme_provider.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   runApp(
     MultiProvider(
@@ -104,7 +106,7 @@ class MyApp extends StatelessWidget {
               path: 'favorites',
               builder: (context, state) => const FavoritesScreen(),
             ),
-             GoRoute(
+            GoRoute(
               path: 'about',
               builder: (context, state) => const AboutScreen(),
             ),

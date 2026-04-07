@@ -21,7 +21,7 @@ class _AgenciesScreenState extends State<AgenciesScreen> {
   void initState() {
     super.initState();
     // Load initial agencies (e.g., from a default location)
-    _agenciesFuture = _transitService.getAgencies(); 
+    _agenciesFuture = _transitService.getAgencies();
   }
 
   void _searchAgencies(String query) {
@@ -78,7 +78,7 @@ class _AgenciesScreenState extends State<AgenciesScreen> {
                   itemBuilder: (context, index) {
                     final agency = agencies[index];
                     final isFavorite = favoritesProvider.isFavoriteAgency(agency.id);
-                    
+
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       elevation: 2,
@@ -97,8 +97,8 @@ class _AgenciesScreenState extends State<AgenciesScreen> {
                              ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  isFavorite 
-                                  ? 'Removed ${agency.name} from favorites' 
+                                  isFavorite
+                                  ? 'Removed ${agency.name} from favorites'
                                   : 'Added ${agency.name} to favorites',
                                 ),
                                 duration: const Duration(seconds: 2),
