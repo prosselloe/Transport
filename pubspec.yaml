@@ -1,7 +1,7 @@
 name: transport
 description: "Transport Balears"
 publish_to: 'none'
-version: 1.0.0+10
+version: 1.0.0+13
 
 environment:
   sdk: ^3.9.0
@@ -26,6 +26,7 @@ dependencies:
   mallorca_transit_services: ^1.2.1
   polyline_codec: ^0.1.6
   package_info_plus: ^9.0.0
+  flutter_markdown: ^0.7.7+1
 
 dev_dependencies:
   flutter_test:
@@ -47,3 +48,5 @@ flutter_native_splash:
 
 flutter:
   uses-material-design: true
+  assets:
+    - README.md

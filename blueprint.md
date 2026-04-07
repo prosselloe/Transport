@@ -1,27 +1,27 @@
-# Transport Balears Blueprint
+# Transport de les Balears
 
-## Overview
+## Visió General
 
-This document outlines the architecture, features, and design of Transport Balears, a Flutter application for browsing public transit information in the Balearic Islands, with a special focus on the services provided by the Consorci de Transports de Mallorca.
+Aquest document descriu l'arquitectura, les característiques i el disseny de Transport de les Balears, una aplicació Flutter per consultar informació sobre el transport públic a les Illes Balears, amb un enfocament especial en els serveis oferts pel Consorci de Transports de Mallorca.
 
-## Implemented Features & Design
+## Característiques i Disseny Implementats
 
-*   **Agencies Screen**: Displays a grid of transit agencies, distinguishing between the Consorci de Transports de Mallorca and others from the Onestop API.
-*   **Agency/Stop Details Screen**:
-    *   Shows details for a selected agency or a specific stop.
-    *   Displays a map with all stops for an agency or just the selected stop.
-    *   The map includes the user's current location.
-    *   Lists all the routes associated with the agency or stop.
-*   **Route Details Screen**:
-    *   Displays the path of a selected route on a map, including all its stops.
-    *   Shows a list of all stops for the route.
-    *   The AppBar color dynamically adapts to the route's color for a better user experience.
-*   **Interactive Stop Elements (List and Map)**:
-    *   Both the stop markers on the maps and the items in the stop lists are interactive.
-    *   If a stop provides an external URL (from Transit.land), tapping it will open the URL in a browser.
-    *   If there's no URL but the stop belongs to the "Consorci de Transports de Mallorca" (prefixed with `mallorca::`), tapping it will navigate to the stop's detail screen.
-    *   For other cases, the tap action is disabled to prevent navigation to empty or irrelevant screens.
-*   **Theming**:
-    *   The app uses a custom theme with a primary color of `#0175C2`.
-    *   A `ThemeProvider` is used to allow users to switch between light, dark, and system theme modes.
-*   **Splash Screen**: A native splash screen is implemented for a professional app launch.
+*   **Pantalla d'Agències**: Mostra una graella d'agències de transport, distingint entre el Consorci de Transports de Mallorca i altres de l'API Onestop.
+*   **Pantalla de Detalls d'Agència/Parada**:
+    *   Mostra detalls d'una agència seleccionada o d'una parada específica.
+    *   Mostra un mapa amb totes les parades d'una agència o només la parada seleccionada.
+    *   El mapa inclou la ubicació actual de l'usuari.
+    *   Llista totes les rutes associades a l'agència o parada.
+*   **Pantalla de Detalls de Ruta**:
+    *   Mostra el recorregut d'una ruta seleccionada en un mapa, incloent-hi totes les seves parades.
+    *   Mostra una llista de totes les parades de la ruta.
+    *   El color de l'AppBar s'adapta dinàmicament al color de la ruta per a una millor experiència d'usuari.
+*   **Elements Interactius de Parada (Llista i Mapa)**:
+    *   Tant els marcadors de parada als mapes com els elements a les llistes de parades són interactius.
+    *   Si una parada proporciona una URL externa (de Transit.land), en tocar-la s'obrirà la URL en un navegador.
+    *   Si no hi ha URL però la parada pertany al "Consorci de Transports de Mallorca" (amb el prefix `mallorca::`), en tocar-la es navegarà a la pantalla de detalls de la parada.
+    *   Per a altres casos, l'acció de tocar està desactivada per evitar la navegació a pantalles buides o irrellevants.
+*   **Tema**:
+    *   L'aplicació utilitza un tema personalitzat amb un color primari de `#0175C2`.
+    *   S'utilitza un `ThemeProvider` per permetre als usuaris canviar entre els modes de tema clar, fosc i de sistema.
+*   **Pantalla de Benvinguda**: S'ha implementat una pantalla de benvinguda nativa per a un llançament professional de l'aplicació.
