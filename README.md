@@ -1,8 +1,10 @@
-# Transport Balears
+# Transport terrestre a les Illes Balears
+
+<img src="/assets/images/logo_google_play.png">
 
 ## Visió General
 
-Aquesta és una aplicació Flutter dissenyada per consultar i mostrar informació del transport públic. L'aplicació ofereix una interfície neta, moderna i fàcil d'usar perquè els usuaris explorin agències, rutes i parades de transport, amb un enfocament especial en les dades de les Illes Balears.
+Aquesta és una aplicació Flutter dissenyada per consultar i mostrar informació del transport terrestre; amb bus, tren i metro; a les Illes Balears. L'aplicació ofereix una interfície neta, moderna i fàcil d'usar perquè els usuaris explorin agències, rutes i parades de transport, amb un enfocament especial en les dades de les Illes Balears.
 
 L'aplicació està construïda amb un fort èmfasi en una arquitectura robusta, l'obtenció de dades en temps real i una experiència d'usuari intuïtiva seguint els principis de disseny de Material 3.
 
@@ -30,10 +32,14 @@ L'aplicació està construïda amb un fort èmfasi en una arquitectura robusta, 
     *   Inclou un **tema fosc i clar** que es pot canviar manualment.
     *   `flutter_map` s'utilitza per a la visualització de mapes interactius.
 
+<img src="/assets/images/logo.png">
+
 ## Crèdits
 
 Aquesta aplicació no hauria estat possible sense les fantàstiques fonts de dades obertes i eines de desenvolupament proporcionades per:
 
-*   [**Transit.land (API v2)**](https://www.transit.land/documentation/rest-api/): Una plataforma de dades obertes per al transport públic.
+*   [**Transit.land (API v2)**](https://www.transit.land/documentation/rest-api): Una plataforma de dades obertes per al transport públic.
+*   [**EMT Palma - Empresa Municipal de Transports Urbans de Palma**](https://www.emtpalma.cat): Proveïdor de dades en temps real per a la xarxa d'autobusos urbans de Palma.
 *   [**Mallorca Transport Services API**](https://github.com/open-transport-mallorca/mallorca_transit_services): Un paquet de Dart per accedir a les dades del transport públic de Mallorca.
-*   [**Firebase i Gemini**](https://firebase.google.com/): El backend, l'allotjament i les eines d'IA generativa han estat proporcionades per Google a través de Firebase i l'assistent de codi Gemini a Firebase Studio.
+*   [**TIB - Transports de les Illes Balears**](https://www.tib.org): Font de dades per a la xarxa d'autobusos interurbans, trens i metro a Mallorca.
+*   [**Firebase i Gemini**](https://firebase.google.com): El backend, l'allotjament i les eines d'IA generativa han estat proporcionades per Google a través de Firebase i l'assistent de codi Gemini a Firebase Studio.
