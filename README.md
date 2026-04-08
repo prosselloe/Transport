@@ -1,6 +1,6 @@
 # Transport terrestre a les Illes Balears
 
-<img src="/assets/images/logo_google_play.png">
+<img src="/assets/images/logo.png">
 
 ## Visió General
 
@@ -25,14 +25,24 @@ L'aplicació està construïda amb un fort èmfasi en una arquitectura robusta, 
 *   **Navegació:** `go_router` gestiona tota la navegació, proporcionant un sistema declaratiu i robust que suporta el pas d'objectes complexos entre pantalles.
 *   **Capa de Serveis:** Un `TransitService` dedicat abstrau tota la lògica d'obtenció de dades.
     *   Es comunica amb l'API de `transit.land` per a dades generals i amb el paquet `mallorca_transit_services` per a dades específiques de Mallorca.
-    *   **Obtenció de Dades Optimizada:** La capa de servei està dissenyada per obtenir i combinar dades de manera eficient. Per exemple, a la pantalla de detalls de la ruta, conserva la informació de la ruta existent while obtenint detalls addicionals com la geometria i les parades, evitant la pèrdua de dades.
+    *   **Obtenció de Dades Optimizada:** La capa de servei està dissenyada per obtenir i combinar dades de manera eficient. Per exemple, a la pantalla de detalls de la ruta, conserva la informació de la ruta existent mentre obté detalls addicionals com la geometria i les parades, evitant la pèrdua de dades.
 *   **Models de Dades:** S'utilitzen models de dades clars i immutables (`Agency`, `TransitRoute`, `Stop`, etc.) per representar les dades de les APIs.
 *   **Interfície d'Usuari:**
     *   L'aplicació segueix els principis de **Material 3**.
     *   Inclou un **tema fosc i clar** que es pot canviar manualment.
     *   `flutter_map` s'utilitza per a la visualització de mapes interactius.
 
-<img src="/assets/images/logo.png">
+<img src="/assets/images/logo_.png">
+
+## Avís d'Exempció de Responsabilitat
+
+Aquesta aplicació és una eina independent i no representa, ni està afiliada o recolzada per cap entitat governamental. Les dades provenen de fonts públiques i es mostren amb finalitats informatives.
+
+Concretament, l'aplicació no té cap vincle oficial amb:
+*   **EMT Palma - Empresa Municipal de Transports Urbans de Palma**
+*   **TIB - Transports de les Illes Balears**
+
+Tots els noms, logotips i marques són propietat dels seus respectius propietaris.
 
 ## Crèdits
 
