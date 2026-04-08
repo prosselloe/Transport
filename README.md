@@ -32,8 +32,6 @@ L'aplicació està construïda amb un fort èmfasi en una arquitectura robusta, 
     *   Inclou un **tema fosc i clar** que es pot canviar manualment.
     *   `flutter_map` s'utilitza per a la visualització de mapes interactius.
 
-<img src="/assets/images/logo_.png">
-
 ## Avís d'Exempció de Responsabilitat
 
 Aquesta aplicació és una eina independent i no representa, ni està afiliada o recolzada per cap entitat governamental. Les dades provenen de fonts públiques i es mostren amb finalitats informatives.
@@ -43,6 +41,8 @@ Concretament, l'aplicació no té cap vincle oficial amb:
 *   **TIB - Transports de les Illes Balears**
 
 Tots els noms, logotips i marques són propietat dels seus respectius propietaris.
+
+<img src="/assets/images/logo_.png">
 
 ## Crèdits
 
