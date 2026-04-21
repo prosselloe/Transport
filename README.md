@@ -1,5 +1,10 @@
 # Transport terrestre a les Illes Balears
 
+>⚠️ AVÍS D'EXEMPCIÓ DE RESPONSABILITAT (Disclaimer)
+>*   Aquesta aplicació NO és una aplicació oficial de l'EMT Palma ni del TIB (Consorci de Transports de Mallorca).
+>*   L'aplicació no representa cap entitat governamental ni té cap vinculació administrativa amb l'Ajuntament de Palma ni amb el Govern de les Illes Balears.
+>    Aquesta és una eina independent que utilitza dades d'accés públic per oferir un servei de consulta. Tot i que ens esforcem per mostrar la informació actualitzada, no ens fem responsables >de la precisió, interrupcions del servei o canvis d'última hora en els horaris que depenen directament dels operadors oficials.
+
 <img src="/assets/images/logo.png">
 
 ## Visió General
